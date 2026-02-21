@@ -167,7 +167,7 @@ export default function ProjectsSection() {
                         <h2 className="section-heading text-white">
                             Projects that <span className="gradient-text">Speak</span>
                         </h2>
-                        <a href="#contact" className="text-sm text-white/50 hover:text-white transition-colors tracking-wide flex items-center gap-1.5">
+                        <a href="/work" className="text-sm text-white/50 hover:text-white transition-colors tracking-wide flex items-center gap-1.5">
                             <Layers size={14} />
                             View all work
                         </a>

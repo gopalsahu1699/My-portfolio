@@ -6,11 +6,11 @@ import MagneticButton from "@/components/ui/MagneticButton";
 import { Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
-    { label: "About", href: "#about" },
-    { label: "Projects", href: "#projects" },
-    { label: "Services", href: "#services" },
-    { label: "Skills", href: "#skills" },
-    { label: "Contact", href: "#contact" },
+    { label: "About", href: "/#about" },
+    { label: "Work", href: "/work" },
+    { label: "Services", href: "/#services" },
+    { label: "Skills", href: "/#skills" },
+    { label: "Contact", href: "/#contact" },
 ];
 
 export default function Navbar() {
@@ -34,7 +34,7 @@ export default function Navbar() {
         >
             <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
                 {/* Logo */}
-                <a href="#" className="font-bold text-xl tracking-tight">
+                <a href="/" className="font-bold text-xl tracking-tight">
                     <span className="gradient-text">GKS</span>
                     <span className="text-white/40">.</span>
                 </a>
@@ -54,7 +54,7 @@ export default function Navbar() {
 
                 {/* CTA */}
                 <div className="hidden md:block">
-                    <MagneticButton href="#contact" variant="primary" className="text-xs px-6 py-2.5">
+                    <MagneticButton href="/#contact" variant="primary" className="text-xs px-6 py-2.5">
                         Hire Me
                     </MagneticButton>
                 </div>
@@ -81,7 +81,7 @@ export default function Navbar() {
                             {link.label}
                         </a>
                     ))}
-                    <MagneticButton href="#contact" variant="primary" className="text-sm w-fit">
+                    <MagneticButton href="/#contact" variant="primary" className="text-sm w-fit">
                         Hire Me
                     </MagneticButton>
                 </div>
