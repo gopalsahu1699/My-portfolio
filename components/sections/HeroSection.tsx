@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import MagneticButton from "@/components/ui/MagneticButton";
 import { ArrowDown, Sparkles } from "lucide-react";
+
+// Load Three.js canvas only client-side (no SSR)
+const HeroCanvas = dynamic(() => import("@/components/ui/HeroCanvas"), {
+    ssr: false,
+    loading: () => null,
+});
 
 const TYPING_WORDS = ["Web Apps", "Dashboards", "AI Tools", "SaaS Products"];
 
@@ -15,16 +22,24 @@ export default function HeroSection() {
     useEffect(() => {
         const word = TYPING_WORDS[wordIndex];
         if (!deleting && displayed.length < word.length) {
-            timeoutRef.current = setTimeout(() => setDisplayed(word.slice(0, displayed.length + 1)), 80);
+            timeoutRef.current = setTimeout(
+                () => setDisplayed(word.slice(0, displayed.length + 1)),
+                80
+            );
         } else if (!deleting && displayed.length === word.length) {
             timeoutRef.current = setTimeout(() => setDeleting(true), 1800);
         } else if (deleting && displayed.length > 0) {
-            timeoutRef.current = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 45);
+            timeoutRef.current = setTimeout(
+                () => setDisplayed(displayed.slice(0, -1)),
+                45
+            );
         } else if (deleting && displayed.length === 0) {
             setDeleting(false);
             setWordIndex((i) => (i + 1) % TYPING_WORDS.length);
         }
-        return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
     }, [displayed, deleting, wordIndex]);
 
     return (
@@ -32,10 +47,11 @@ export default function HeroSection() {
             id="hero"
             className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6 pt-24"
         >
-            {/* Background Gradient */}
-            <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
+            {/* ── 3D Three.js Canvas (full background) ── */}
+            <HeroCanvas />
 
-            {/* Radial overlay */}
+            {/* Gradient overlays */}
+            <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -44,43 +60,12 @@ export default function HeroSection() {
                 }}
             />
 
-            {/* Floating Blobs */}
+            {/* Soft blobs behind text for readability */}
             <div className="blob blob-1" />
             <div className="blob blob-2" />
             <div className="blob blob-3" />
 
-            {/* Animated geometric shapes */}
-            <div
-                className="absolute top-1/4 right-16 w-48 h-48 opacity-10 pointer-events-none"
-                style={{ animation: "spin 25s linear infinite" }}
-            >
-                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon
-                        points="100,10 190,55 190,145 100,190 10,145 10,55"
-                        stroke="url(#hex-grad)" strokeWidth="1.5" fill="none"
-                    />
-                    <defs>
-                        <linearGradient id="hex-grad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#8B5CF6" /><stop offset="1" stopColor="#06B6D4" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-            </div>
-            <div
-                className="absolute bottom-32 left-16 w-32 h-32 opacity-10 pointer-events-none"
-                style={{ animation: "spin 18s linear infinite reverse" }}
-            >
-                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="15" y="15" width="70" height="70" stroke="url(#sq-grad)" strokeWidth="1" fill="none" transform="rotate(20 50 50)" />
-                    <defs>
-                        <linearGradient id="sq-grad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#3B82F6" /><stop offset="1" stopColor="#06B6D4" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-            </div>
-
-            {/* Content */}
+            {/* ── Hero content ── */}
             <div className="relative z-10 text-center max-w-5xl mx-auto">
                 {/* Badge */}
                 <div
@@ -92,7 +77,7 @@ export default function HeroSection() {
                     <Sparkles size={12} className="text-brand-purple" />
                 </div>
 
-                {/* Main Heading */}
+                {/* Main heading */}
                 <h1 className="hero-heading text-white mb-4">
                     <span className="block text-white/90">Gopal Krishn</span>
                     <span className="block gradient-text">Sahu</span>
@@ -112,7 +97,7 @@ export default function HeroSection() {
                     />
                 </div>
 
-                {/* CTA Buttons */}
+                {/* CTAs */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <MagneticButton href="#projects" variant="primary" className="text-sm">
                         View Projects
@@ -122,9 +107,11 @@ export default function HeroSection() {
                     </MagneticButton>
                 </div>
 
-                {/* Scroll indicator */}
+                {/* Scroll hint */}
                 <div className="mt-20 flex flex-col items-center gap-2 opacity-40">
-                    <span className="text-xs tracking-widest uppercase text-white/50">Scroll</span>
+                    <span className="text-xs tracking-widest uppercase text-white/50">
+                        Scroll
+                    </span>
                     <ArrowDown size={16} className="text-white/50 animate-bounce" />
                 </div>
             </div>
