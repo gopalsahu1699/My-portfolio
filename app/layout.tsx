@@ -4,39 +4,120 @@ import { Toaster } from "react-hot-toast";
 import CustomCursor from "@/components/ui/CustomCursor";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 
+const SITE_URL = "https://gopalsahu.vercel.app";
+
 export const metadata: Metadata = {
-    title: "Gopal Krishn Sahu | Full Stack Developer — Web Apps, Dashboards & AI Tools",
+    metadataBase: new URL(SITE_URL),
+    title: {
+        default:
+            "Gopal Krishn Sahu | Freelance Full Stack Developer — Next.js, React & Supabase",
+        template: "%s | Gopal Krishn Sahu",
+    },
     description:
-        "Freelance Full Stack Developer specializing in scalable web applications, admin dashboards, and SaaS MVPs. Available for hire. Let's build something great together.",
+        "Hire Gopal Krishn Sahu — Freelance Full Stack Developer from India specializing in Next.js, React, TypeScript, Supabase & Tailwind CSS. No upfront cost. Fast delivery. Web apps, dashboards & SaaS MVPs.",
     keywords: [
-        "Full Stack Developer",
-        "Next.js Developer",
-        "React Developer",
-        "Freelance Web Developer India",
-        "SaaS Developer",
-        "Dashboard Developer",
+        "Freelance Full Stack Developer India",
+        "Hire Next.js Developer",
+        "React Developer for hire",
+        "SaaS Developer India",
+        "Admin Dashboard Developer",
+        "Next.js Freelancer",
+        "TypeScript Developer",
+        "Supabase Developer",
+        "Web App Developer India",
+        "No upfront cost web developer",
+        "Affordable web developer",
+        "Full Stack Developer remote",
         "Gopal Krishn Sahu",
+        "Portfolio Gopal Sahu",
+        "Buy web app from developer India",
     ],
-    authors: [{ name: "Gopal Krishn Sahu" }],
+    authors: [{ name: "Gopal Krishn Sahu", url: SITE_URL }],
     creator: "Gopal Krishn Sahu",
+    publisher: "Gopal Krishn Sahu",
+    category: "Technology",
     openGraph: {
         type: "website",
         locale: "en_US",
-        url: "https://gopalsahu.dev",
-        title: "Gopal Krishn Sahu | Full Stack Developer",
+        url: SITE_URL,
+        title:
+            "Gopal Krishn Sahu | Freelance Full Stack Developer — No Upfront Cost",
         description:
-            "Building scalable digital products — Web Apps, Admin Dashboards, and AI Tools. Available for freelance work.",
+            "Full Stack Developer building scalable web apps, dashboards & SaaS MVPs. No upfront payment. Fast delivery. Let's build something great.",
         siteName: "Gopal Krishn Sahu Portfolio",
+        images: [
+            {
+                url: `${SITE_URL}/og-image.png`,
+                width: 1200,
+                height: 630,
+                alt: "Gopal Krishn Sahu — Freelance Full Stack Developer",
+            },
+        ],
     },
     twitter: {
         card: "summary_large_image",
-        title: "Gopal Krishn Sahu | Full Stack Developer",
-        description: "Building scalable digital products — Web Apps, Dashboards & AI Tools.",
+        title: "Gopal Krishn Sahu | Freelance Full Stack Developer",
+        description:
+            "Building web apps, dashboards & SaaS MVPs. No upfront cost. Fast delivery. Available for freelance work.",
         creator: "@gopalsahu",
+        images: [`${SITE_URL}/og-image.png`],
     },
     robots: {
         index: true,
         follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            "max-video-preview": -1,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+        },
+    },
+    alternates: {
+        canonical: SITE_URL,
+    },
+    verification: {
+        google: "add-your-google-search-console-token-here",
+    },
+};
+
+// JSON-LD Structured Data — helps Google understand who you are
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Gopal Krishn Sahu",
+    url: SITE_URL,
+    email: "gopalsahu1699@gmail.com",
+    jobTitle: "Freelance Full Stack Developer",
+    description:
+        "Freelance Full Stack Developer from India specializing in Next.js, React, TypeScript, Supabase. No upfront cost. Fast delivery.",
+    knowsAbout: [
+        "Next.js",
+        "React",
+        "TypeScript",
+        "Supabase",
+        "Tailwind CSS",
+        "Full Stack Development",
+        "SaaS Development",
+        "Admin Dashboard",
+    ],
+    sameAs: [
+        "https://github.com/gopalsahu1699",
+        "https://linkedin.com/in/gopalsahu",
+    ],
+    address: {
+        "@type": "PostalAddress",
+        addressCountry: "IN",
+    },
+    offers: {
+        "@type": "Offer",
+        description: "Freelance Full Stack Web Development — No upfront payment required",
+        price: "0",
+        priceCurrency: "USD",
+        priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            description: "Pay only after first milestone delivery",
+        },
     },
 };
 
@@ -47,6 +128,12 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className="scroll-smooth">
+            <head>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            </head>
             <body className="bg-background text-white antialiased">
                 <CustomCursor />
                 <ScrollProgress />
