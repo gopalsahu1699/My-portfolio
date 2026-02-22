@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { PROJECTS, CATEGORIES, type Category, type Project } from "@/lib/projects";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import Navbar from "@/components/sections/Navbar";
 import Footer from "@/components/sections/Footer";
 import SectionReveal from "@/components/ui/SectionReveal";
@@ -15,16 +15,32 @@ import {
     CheckCircle2,
     ChevronRight,
     Layers,
+    Loader2,
 } from "lucide-react";
 
+type Category = "All" | "Web App" | "Dashboard" | "SaaS" | "Landing Page";
+const CATEGORIES: Category[] = ["All", "Web App", "Dashboard", "SaaS", "Landing Page"];
+
+interface Project {
+    id: string;
+    title: string;
+    short_desc: string;
+    full_desc: string;
+    category: string;
+    tags: string[];
+    emoji: string;
+    gradient: string;
+    year: string;
+    duration: string;
+    role: string;
+    live: string;
+    github: string;
+    features: string[];
+    featured: boolean;
+}
+
 /* ─── Filter pills ─── */
-function FilterBar({
-    active,
-    onChange,
-}: {
-    active: Category;
-    onChange: (c: Category) => void;
-}) {
+function FilterBar({ active, onChange }: { active: Category; onChange: (c: Category) => void }) {
     return (
         <div className="flex flex-wrap gap-2 justify-center">
             {CATEGORIES.map((cat) => (
@@ -54,14 +70,8 @@ function FilterBar({
     );
 }
 
-/* ─── Tilt card ─── */
-function ProjectCard({
-    project,
-    onClick,
-}: {
-    project: Project;
-    onClick: () => void;
-}) {
+/* ─── Project Card ─── */
+function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -70,8 +80,7 @@ function ProjectCard({
         const rect = card.getBoundingClientRect();
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
-        card.style.transform = `perspective(900px) rotateX(${(y - 0.5) * -12}deg) rotateY(${(x - 0.5) * 12
-            }deg) scale(1.02)`;
+        card.style.transform = `perspective(900px) rotateX(${(y - 0.5) * -12}deg) rotateY(${(x - 0.5) * 12}deg) scale(1.02)`;
     }, []);
 
     const onMouseLeave = useCallback(() => {
@@ -106,7 +115,6 @@ function ProjectCard({
                     {project.emoji}
                 </div>
 
-                {/* Category badge */}
                 <span
                     className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold"
                     style={{
@@ -119,7 +127,6 @@ function ProjectCard({
                     {project.category}
                 </span>
 
-                {/* Year badge */}
                 <span
                     className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold"
                     style={{
@@ -132,7 +139,6 @@ function ProjectCard({
                     {project.year}
                 </span>
 
-                {/* Hover shimmer */}
                 <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                     style={{
@@ -147,9 +153,8 @@ function ProjectCard({
                 <h3 className="font-bold text-white text-lg mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-400 group-hover:to-cyan-400 transition-all duration-300">
                     {project.title}
                 </h3>
-                <p className="text-sm text-white/50 leading-relaxed mb-4">{project.shortDesc}</p>
+                <p className="text-sm text-white/50 leading-relaxed mb-4">{project.short_desc}</p>
 
-                {/* Tags */}
                 <div className="flex flex-wrap gap-1.5 mb-5">
                     {project.tags.slice(0, 4).map((tag) => (
                         <span
@@ -178,7 +183,6 @@ function ProjectCard({
                     )}
                 </div>
 
-                {/* Footer row */}
                 <div className="flex items-center justify-between pt-4 border-t border-white/5">
                     <div className="flex items-center gap-4">
                         <a
@@ -209,22 +213,13 @@ function ProjectCard({
 }
 
 /* ─── Project Detail Modal ─── */
-function ProjectModal({
-    project,
-    onClose,
-}: {
-    project: Project;
-    onClose: () => void;
-}) {
+function ProjectModal({ project, onClose }: { project: Project; onClose: () => void }) {
     return (
         <div
             className="fixed inset-0 z-[9995] flex items-end md:items-center justify-center p-0 md:p-6"
             onClick={onClose}
         >
-            {/* Backdrop */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-
-            {/* Panel */}
             <div
                 className="relative z-10 w-full md:max-w-3xl max-h-[90vh] overflow-y-auto rounded-t-3xl md:rounded-3xl"
                 style={{
@@ -253,8 +248,6 @@ function ProjectModal({
                     >
                         {project.category}
                     </span>
-
-                    {/* Close button */}
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors"
@@ -268,55 +261,45 @@ function ProjectModal({
                 <div className="p-8">
                     <h2 className="text-2xl font-black text-white mb-2">{project.title}</h2>
 
-                    {/* Meta row */}
                     <div className="flex flex-wrap gap-5 mb-6 text-xs text-white/40">
                         <span className="flex items-center gap-1.5">
                             <Calendar size={12} /> {project.year}
                         </span>
-                        <span className="flex items-center gap-1.5">
-                            <Clock size={12} /> {project.duration}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <User size={12} /> {project.role}
-                        </span>
+                        {project.duration && (
+                            <span className="flex items-center gap-1.5">
+                                <Clock size={12} /> {project.duration}
+                            </span>
+                        )}
+                        {project.role && (
+                            <span className="flex items-center gap-1.5">
+                                <User size={12} /> {project.role}
+                            </span>
+                        )}
                     </div>
 
-                    <p className="text-white/60 leading-relaxed text-sm mb-8">{project.fullDesc}</p>
+                    {project.full_desc && (
+                        <p className="text-white/60 leading-relaxed text-sm mb-8">{project.full_desc}</p>
+                    )}
 
-                    {/* Highlights */}
-                    <div className="grid grid-cols-3 gap-4 mb-8">
-                        {project.highlights.map((h) => (
-                            <div
-                                key={h.label}
-                                className="text-center py-4 rounded-2xl"
-                                style={{
-                                    background: "rgba(139,92,246,0.06)",
-                                    border: "1px solid rgba(139,92,246,0.15)",
-                                }}
-                            >
-                                <div className="text-2xl font-black gradient-text">{h.value}</div>
-                                <div className="text-xs text-white/40 mt-1">{h.label}</div>
-                            </div>
-                        ))}
-                    </div>
+                    {project.features.length > 0 && (
+                        <>
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">
+                                Key Features
+                            </h3>
+                            <ul className="space-y-2.5 mb-8">
+                                {project.features.map((f) => (
+                                    <li key={f} className="flex items-start gap-3 text-sm text-white/65">
+                                        <CheckCircle2
+                                            size={15}
+                                            className="text-brand-purple mt-0.5 flex-shrink-0"
+                                        />
+                                        {f}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
 
-                    {/* Features */}
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">
-                        Key Features
-                    </h3>
-                    <ul className="space-y-2.5 mb-8">
-                        {project.features.map((f) => (
-                            <li key={f} className="flex items-start gap-3 text-sm text-white/65">
-                                <CheckCircle2
-                                    size={15}
-                                    className="text-brand-purple mt-0.5 flex-shrink-0"
-                                />
-                                {f}
-                            </li>
-                        ))}
-                    </ul>
-
-                    {/* Full tag list */}
                     <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-3">
                         Tech Stack
                     </h3>
@@ -336,7 +319,6 @@ function ProjectModal({
                         ))}
                     </div>
 
-                    {/* CTA buttons */}
                     <div className="flex gap-4">
                         <a
                             href={project.live}
@@ -371,17 +353,30 @@ function ProjectModal({
 export default function WorkPage() {
     const [activeCategory, setActiveCategory] = useState<Category>("All");
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const supabase = createSupabaseBrowserClient();
+        supabase
+            .from("projects")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .then(({ data }) => {
+                setProjects(data ?? []);
+                setLoading(false);
+            });
+    }, []);
 
     const filtered =
         activeCategory === "All"
-            ? PROJECTS
-            : PROJECTS.filter((p) => p.category === activeCategory);
+            ? projects
+            : projects.filter((p) => p.category === activeCategory);
 
     return (
         <>
             <Navbar />
             <main className="relative min-h-screen pt-32 pb-0 overflow-hidden">
-                {/* Background glows */}
                 <div
                     className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] pointer-events-none"
                     style={{
@@ -391,10 +386,12 @@ export default function WorkPage() {
                 />
 
                 <div className="max-w-7xl mx-auto px-6">
-                    {/* Page header */}
                     <SectionReveal>
                         <div className="text-center mb-16">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium text-white/50 mb-6 glass" style={{ border: "1px solid rgba(139,92,246,0.2)" }}>
+                            <div
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium text-white/50 mb-6 glass"
+                                style={{ border: "1px solid rgba(139,92,246,0.2)" }}
+                            >
                                 <Layers size={12} className="text-brand-purple" />
                                 Complete Portfolio
                             </div>
@@ -402,20 +399,18 @@ export default function WorkPage() {
                                 All <span className="gradient-text">Work</span>
                             </h1>
                             <p className="text-white/45 max-w-xl mx-auto text-base leading-relaxed">
-                                {PROJECTS.length} projects across web apps, dashboards, SaaS products, and landing pages.
-                                Each built from scratch with a focus on performance and design.
+                                {loading ? "Loading projects…" : `${projects.length} projects`} across web
+                                apps, dashboards, SaaS products, and landing pages.
                             </p>
                         </div>
                     </SectionReveal>
 
-                    {/* Filter bar */}
                     <SectionReveal delay={0.1}>
                         <div className="mb-12">
                             <FilterBar active={activeCategory} onChange={setActiveCategory} />
                         </div>
                     </SectionReveal>
 
-                    {/* Count */}
                     <SectionReveal delay={0.12}>
                         <div className="flex items-center justify-between mb-6">
                             <p className="text-sm text-white/30">
@@ -426,23 +421,28 @@ export default function WorkPage() {
                         </div>
                     </SectionReveal>
 
-                    {/* Grid */}
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-24">
-                        {filtered.map((project, i) => (
-                            <SectionReveal key={project.id} delay={i * 0.06}>
-                                <ProjectCard
-                                    project={project}
-                                    onClick={() => setSelectedProject(project)}
-                                />
-                            </SectionReveal>
-                        ))}
-                    </div>
+                    {loading ? (
+                        <div className="flex items-center justify-center py-32 gap-3 text-white/30">
+                            <Loader2 size={20} className="animate-spin" />
+                            <span className="text-sm">Loading projects…</span>
+                        </div>
+                    ) : (
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-24">
+                            {filtered.map((project, i) => (
+                                <SectionReveal key={project.id} delay={i * 0.06}>
+                                    <ProjectCard
+                                        project={project}
+                                        onClick={() => setSelectedProject(project)}
+                                    />
+                                </SectionReveal>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </main>
 
             <Footer />
 
-            {/* Modal */}
             {selectedProject && (
                 <ProjectModal
                     project={selectedProject}

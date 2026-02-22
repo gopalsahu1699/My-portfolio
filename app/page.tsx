@@ -8,6 +8,10 @@ import SkillsSection from "@/components/sections/SkillsSection";
 import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/sections/Footer";
 
+// Force fresh Supabase data on every request (for ProjectsSection)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function Home() {
     return (
         <main className="relative">
