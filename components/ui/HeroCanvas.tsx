@@ -1,118 +1,171 @@
 "use client";
 
-import { useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { MeshDistortMaterial, Sphere, Float, Stars, Torus } from "@react-three/drei";
-import * as THREE from "three";
+import { useEffect, useRef } from "react";
 
-/* ─── Floating distorted sphere (main orb) ─── */
-function FloatingOrb() {
-    const meshRef = useRef<THREE.Mesh>(null);
-    useFrame((state) => {
-        if (!meshRef.current) return;
-        meshRef.current.rotation.x = state.clock.elapsedTime * 0.15;
-        meshRef.current.rotation.y = state.clock.elapsedTime * 0.25;
-    });
-
-    return (
-        <Float speed={2} rotationIntensity={0.4} floatIntensity={0.8}>
-            <Sphere ref={meshRef} args={[1.4, 64, 64]}>
-                <MeshDistortMaterial
-                    color="#8B5CF6"
-                    attach="material"
-                    distort={0.55}
-                    speed={2.5}
-                    roughness={0}
-                    metalness={0.3}
-                    opacity={0.18}
-                    transparent
-                />
-            </Sphere>
-        </Float>
-    );
+interface Particle {
+    x: number;
+    y: number;
+    z: number;
+    vx: number;
+    vy: number;
+    size: number;
+    opacity: number;
+    color: string;
 }
 
-/* ─── Wireframe torus ─── */
-function WireframeTorus() {
-    const meshRef = useRef<THREE.Mesh>(null);
-    useFrame((state) => {
-        if (!meshRef.current) return;
-        meshRef.current.rotation.x = state.clock.elapsedTime * 0.3;
-        meshRef.current.rotation.z = state.clock.elapsedTime * 0.2;
-    });
+const COLORS = ["#8B5CF6", "#3B82F6", "#06B6D4", "#A78BFA"];
 
-    return (
-        <Float speed={1.5} rotationIntensity={0.6} floatIntensity={0.5}>
-            <Torus ref={meshRef} args={[2, 0.015, 16, 120]}>
-                <meshBasicMaterial color="#3B82F6" opacity={0.25} transparent wireframe={false} />
-            </Torus>
-        </Float>
-    );
-}
-
-/* ─── Outer ring ─── */
-function OuterRing() {
-    const meshRef = useRef<THREE.Mesh>(null);
-    useFrame((state) => {
-        if (!meshRef.current) return;
-        meshRef.current.rotation.y = state.clock.elapsedTime * 0.12;
-        meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.3;
-    });
-
-    return (
-        <Torus ref={meshRef} args={[2.8, 0.008, 16, 120]}>
-            <meshBasicMaterial color="#06B6D4" opacity={0.2} transparent />
-        </Torus>
-    );
-}
-
-/* ─── Icosahedron wireframe ─── */
-function IcosaWireframe() {
-    const meshRef = useRef<THREE.Mesh>(null);
-    useFrame((state) => {
-        if (!meshRef.current) return;
-        meshRef.current.rotation.x = state.clock.elapsedTime * 0.08;
-        meshRef.current.rotation.y = state.clock.elapsedTime * 0.12;
-    });
-
-    return (
-        <Float speed={1} rotationIntensity={0.2} floatIntensity={0.3}>
-            <mesh ref={meshRef}>
-                <icosahedronGeometry args={[1.9, 1]} />
-                <meshBasicMaterial color="#8B5CF6" wireframe opacity={0.12} transparent />
-            </mesh>
-        </Float>
-    );
-}
-
-/* ─── Main Canvas export ─── */
 export default function HeroCanvas() {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const animRef = useRef<number>(0);
+    const particlesRef = useRef<Particle[]>([]);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const resize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        resize();
+        window.addEventListener("resize", resize);
+
+        // Init particles
+        const count = Math.min(120, Math.floor((window.innerWidth * window.innerHeight) / 8000));
+        particlesRef.current = Array.from({ length: count }, () => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            z: Math.random(),
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            size: Math.random() * 2 + 0.5,
+            opacity: Math.random() * 0.6 + 0.1,
+            color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        }));
+
+        let time = 0;
+
+        const draw = () => {
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            time += 0.005;
+
+            const particles = particlesRef.current;
+
+            // Draw connection lines
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(139,92,246,${0.08 * (1 - dist / 120)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw and move particles
+            particles.forEach((p) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0) p.x = w;
+                if (p.x > w) p.x = 0;
+                if (p.y < 0) p.y = h;
+                if (p.y > h) p.y = 0;
+
+                // Pulse
+                const pulse = Math.sin(time * 2 + p.z * 6) * 0.3 + 0.7;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * pulse, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.opacity * pulse;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+
+                // Glow halo
+                const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 6);
+                grad.addColorStop(0, p.color.replace(")", `,${p.opacity * 0.3})`).replace("rgb", "rgba"));
+                grad.addColorStop(1, "transparent");
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * 6, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+            });
+
+            // Draw 3 slow-rotating geometric rings via ellipses
+            const cx = w / 2;
+            const cy = h / 2;
+
+            // Ring 1 — purple torus silhouette
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(time * 0.3);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, Math.min(w, h) * 0.32, Math.min(w, h) * 0.12, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(139,92,246,0.12)";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.restore();
+
+            // Ring 2 — blue torus silhouette different tilt
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(-time * 0.18);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, Math.min(w, h) * 0.44, Math.min(w, h) * 0.08, 0.4, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(59,130,246,0.09)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.restore();
+
+            // Ring 3 — cyan
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(time * 0.12);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, Math.min(w, h) * 0.55, Math.min(w, h) * 0.06, -0.3, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(6,182,212,0.07)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.restore();
+
+            // Central glow orb
+            const orbGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.18);
+            const pulse = Math.sin(time * 1.5) * 0.04 + 0.12;
+            orbGrad.addColorStop(0, `rgba(139,92,246,${pulse})`);
+            orbGrad.addColorStop(0.5, `rgba(59,130,246,${pulse * 0.4})`);
+            orbGrad.addColorStop(1, "transparent");
+            ctx.beginPath();
+            ctx.arc(cx, cy, Math.min(w, h) * 0.18, 0, Math.PI * 2);
+            ctx.fillStyle = orbGrad;
+            ctx.fill();
+
+            animRef.current = requestAnimationFrame(draw);
+        };
+
+        draw();
+
+        return () => {
+            cancelAnimationFrame(animRef.current);
+            window.removeEventListener("resize", resize);
+        };
+    }, []);
+
     return (
-        <Canvas
-            camera={{ position: [0, 0, 6], fov: 45 }}
-            style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-            gl={{ alpha: true, antialias: true }}
-            dpr={[1, 1.5]}
-        >
-            <ambientLight intensity={0.3} />
-            <pointLight position={[5, 5, 5]} intensity={1.5} color="#8B5CF6" />
-            <pointLight position={[-5, -5, 5]} intensity={0.8} color="#06B6D4" />
-
-            {/* Star field */}
-            <Stars
-                radius={80}
-                depth={40}
-                count={2500}
-                factor={3}
-                saturation={0.5}
-                fade
-                speed={0.5}
-            />
-
-            <FloatingOrb />
-            <WireframeTorus />
-            <OuterRing />
-            <IcosaWireframe />
-        </Canvas>
+        <canvas
+            ref={canvasRef}
+            className="absolute inset-0 pointer-events-none"
+            style={{ opacity: 0.85 }}
+        />
     );
 }

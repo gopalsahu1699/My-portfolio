@@ -1,15 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import HeroCanvas from "@/components/ui/HeroCanvas";
 import MagneticButton from "@/components/ui/MagneticButton";
 import { ArrowDown, Sparkles } from "lucide-react";
-
-// Load Three.js canvas only client-side (no SSR)
-const HeroCanvas = dynamic(() => import("@/components/ui/HeroCanvas"), {
-    ssr: false,
-    loading: () => null,
-});
 
 const TYPING_WORDS = ["Web Apps", "Dashboards", "AI Tools", "SaaS Products"];
 
